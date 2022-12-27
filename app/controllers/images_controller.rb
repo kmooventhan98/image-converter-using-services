@@ -1,3 +1,4 @@
+require 'base64'
 class ImagesController < ApplicationController
   before_action :set_image, only: %i[ show edit update destroy ]
 
@@ -22,7 +23,12 @@ class ImagesController < ApplicationController
   # POST /images or /images.json
   def create
     @image = Image.new(image_params)
-
+    path = image_params.fetch("attachment").tempfile.path
+    content_type = image_params.fetch("attachment").content_type
+    @image.data_uri = File.open(path,'rb') do |img|
+                        base64_img = Base64.strict_encode64(img.read)
+                        "data: #{content_type};base64, #{base64_img}"
+                      end
     respond_to do |format|
       if @image.save
         format.html { redirect_to image_url(@image), notice: "Image was successfully created." }
